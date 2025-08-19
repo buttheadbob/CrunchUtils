@@ -52,6 +52,7 @@ using VRage.Game.ObjectBuilders.Definitions;
 using VRage.Game.ObjectBuilders.ComponentSystem;
 using Sandbox.Game.Entities.Character.Components;
 using System.Media;
+using Sandbox.Game.SessionComponents;
 
 namespace CrunchUtilities
 {
@@ -1419,88 +1420,6 @@ namespace CrunchUtilities
             Context.Respond("Total world PCU : " + MySession.Static.TotalSessionPCU);
         }
 
-        /*
-        private MyGps CreateGps(Vector3D Position, Color gpsColor, int seconds, string Nation, string Reason)
-        {
-            MyGps gps = new MyGps
-            {
-                Coords = Position,
-                Name = Nation + " - ",
-                DisplayName = Nation + " - Position",
-                GPSColor = gpsColor,
-                IsContainerGPS = true,
-                ShowOnHud = true,
-                DiscardAt = new TimeSpan(0, 0, seconds, 0),
-                Description = "Nation Distress Signal \n" + Reason,
-            };
-            gps.UpdateHash();
-
-            return gps;
-        }
-        */
-
-        //[Command("isthisasteroid", "fuck fuck fuck")]
-        //[Permission(MyPromoteLevel.None)]
-        //public void DoAsteroidStuff()
-        //{
-
-        //    List<VRage.ModAPI.IMyEntity> l = new List<VRage.ModAPI.IMyEntity>();
-
-        //    BoundingSphereD sphere = new BoundingSphereD(Context.Player.Character.PositionComp.GetPosition(), 500);
-        //    l = MyAPIGateway.Entities.GetEntitiesInSphere(ref sphere);
-
-
-        //    foreach (IMyEntity e in l)
-        //    {
-        //        if (e is MyCubeGrid grid)
-        //        {
-
-        //            MyGps gps = CreateGps(grid.PositionComp.GetPosition(), Color.Green, 300, "", "");
-
-
-        //            MyGpsCollection gpsCollection = (MyGpsCollection)MyAPIGateway.Session?.GPS;
-        //            gps.SetEntityId(grid.EntityId);
-        //            gpsCollection.AddPlayerGps(Context.Player.IdentityId, ref gps);
-
-        //        }
-        //        CrunchUtilitiesPlugin.Log.Info(e.GetType().ToString());
-        //    }
-
-        //}
-        [Command("ishydrogen", "testing store stuff")]
-        [Permission(MyPromoteLevel.Admin)]
-        public void TEST()
-        {
-            MyStoreBlock store = null;
-
-            ConcurrentBag<MyGroups<MyCubeGrid, MyGridPhysicalGroupData>.Group> gridWithSubGrids = GridFinder.FindLookAtGridGroup(Context.Player.Character);
-
-            if (gridWithSubGrids.Count > 0)
-            {
-                Context.Respond("3");
-                foreach (var itemd in gridWithSubGrids)
-                {
-                    foreach (MyGroups<MyCubeGrid, MyGridPhysicalGroupData>.Node groupNodes in itemd.Nodes)
-                    {
-                        MyCubeGrid grid = groupNodes.NodeData;
-                        var gts = MyAPIGateway.TerminalActionsHelper.GetTerminalSystemForGrid(grid);
-                        var blockList = new List<Sandbox.ModAPI.IMyStoreBlock>();
-                        gts.GetBlocksOfType(blockList);
-
-                        foreach (Sandbox.ModAPI.IMyStoreBlock s in blockList)
-                        {
-                            store = s as MyStoreBlock;
-                            foreach (MyStoreItem item in store.PlayerItems)
-                            {
-                                Context.Respond(item.StoreItemType.ToString());
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-
         [Command("zone", "edit safezone whitelist or blacklist")]
         [Permission(MyPromoteLevel.Admin)]
         public void EditZone(string addOrRemove, string playerOrFac, string nameOrTag)
@@ -1607,6 +1526,60 @@ namespace CrunchUtilities
                     break;
             }
         }
+
+        [Command("sywavefix", "delete station")]
+        [Permission(MyPromoteLevel.Admin)]
+        public void DeleteStationAtPlayer()
+        {
+        
+                BoundingSphereD sphere = new BoundingSphereD(Context.Player.Character.PositionComp.GetPosition(), 500);
+                var l = MyAPIGateway.Entities.GetEntitiesInSphere(ref sphere);
+                MySafeZone zone = null;
+                List<VRage.Game.ModAPI.IMyCubeGrid> NPCGrids = new List<VRage.Game.ModAPI.IMyCubeGrid>();
+                List<VRage.Game.ModAPI.IMyCubeGrid> GridsOutsideZone = new List<VRage.Game.ModAPI.IMyCubeGrid>();
+                foreach (IMyEntity e in l)
+                {
+                    if (e is MySafeZone z)
+                    {
+                        zone = z;
+                        // CrunchUtilitiesPlugin.Log.Info("Zone");
+                        break;
+                    }
+                }
+
+                foreach (IMyEntity e in l)
+                {
+                    if (e is MyCubeGrid grid)
+                    {
+                        if (FacUtils.GetPlayersFaction(FacUtils.GetOwner(grid)) != null)
+                        {
+                            if (grid != null && FacUtils.GetPlayersFaction(FacUtils.GetOwner(grid)).Tag.Length > 3)
+                            {
+                                var gts = MyAPIGateway.TerminalActionsHelper.GetTerminalSystemForGrid(grid);
+                                var blockList = new List<Sandbox.ModAPI.IMyStoreBlock>();
+                                gts.GetBlocksOfType(blockList);
+
+                                if (blockList.Count > 0)
+                                    NPCGrids.Add(grid);
+                            }
+                        }
+                    }
+                }
+
+                foreach (VRage.Game.ModAPI.IMyCubeGrid grid in NPCGrids)
+                {
+                    var station = MySession.Static.Factions.GetStationByGridId(grid.EntityId);
+                    if (station != null)
+                    {
+                        Context.Respond("Yes this is an economy station");
+                    }
+                    else
+                    {
+                        Context.Respond("No this isnt an economy station");
+                    }
+                }
+        }
+
 
         [Command("isecon", "output if the target station is an economy")]
         [Permission(MyPromoteLevel.None)]
@@ -4608,8 +4581,8 @@ namespace CrunchUtilities
             if (player != null && fac2 != null)
             {
                 //  Context.Respond(player.DisplayName + " FACTION Reputation Before Change : " + MySession.Static.Factions.GetRelationBetweenPlayerAndFaction(Context.Player.IdentityId, fac2.FactionId));
-                MySession.Static.Factions.AddFactionPlayerReputation(player.IdentityId, fac2.FactionId, 1500, ReputationChangeReason.Admin, true, true);
-                Context.Respond("Did it work?");
+                MySession.Static.Factions.SetReputationBetweenPlayerAndFaction(player.IdentityId, fac2.FactionId, 1500, ReputationChangeReason.Admin);
+                Context.Respond("Changed");
                 // Context.Respond(player.DisplayName + " FACTION Reputation After Change : " + MySession.Static.Factions.GetRelationBetweenPlayerAndFaction(Context.Player.IdentityId, fac2.FactionId));
             }
             else
