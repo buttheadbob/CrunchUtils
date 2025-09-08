@@ -1142,9 +1142,8 @@ namespace CrunchUtilities
 
                     foreach (Sandbox.ModAPI.IMyGasTank tank in blockList)
                     {
-                        MyGasTank tankk = tank as MyGasTank;
 
-                        tankk.ChangeFillRatioAmount(fill);
+                        tank.ChangeFilledRatio(fill, true);
 
                     }
                     Context.Respond(blockList.Count + " Tanks filled");
