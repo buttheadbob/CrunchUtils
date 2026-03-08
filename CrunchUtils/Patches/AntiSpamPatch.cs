@@ -4,21 +4,21 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using Sandbox.Engine.Multiplayer;
 using SpaceEngineers.Game.Entities.Blocks;
 using Torch.Managers.PatchManager;
 
 namespace CrunchUtilities.Patches
 {
     [PatchShim]
-    public static class DisableAIBlockFlee
+    public static class AntiSpamPatch
     {
         internal static readonly MethodInfo flee =
-            typeof(MyDefensiveCombatBlock).GetMethod("Flee", BindingFlags.Instance | BindingFlags.Public, null,
-                new Type[] { typeof(Boolean) }, null) ??
-            throw new Exception("Failed to find patch method");
+            typeof(MyMultiplayerBase).GetMethod("IsMessageSpam", BindingFlags.Static | BindingFlags.NonPublic) ??
+            throw new Exception("Failed to find patch method IsMessageSpam");
 
         internal static readonly MethodInfo patchFlee =
-            typeof(DisableAIBlockFlee).GetMethod(nameof(Flee), BindingFlags.Static | BindingFlags.Public) ??
+            typeof(AntiSpamPatch).GetMethod(nameof(Patched), BindingFlags.Static | BindingFlags.Public) ??
             throw new Exception("Failed to find patch method");
 
         public static void Patch(PatchContext ctx)
@@ -27,11 +27,10 @@ namespace CrunchUtilities.Patches
             ctx.GetPattern(flee).Prefixes.Add(patchFlee);
         }
 
-        public static bool Flee(MyDefensiveCombatBlock __instance, bool force = false)
+        public static bool Patched(long senderIdentity, string messageText)
         {
-            if (__instance.Enemy == null)
+            if (senderIdentity == 0)
             {
-                //   Core.Log.Info("flee intercepted, null enemy");
                 return false;
             }
 
