@@ -156,21 +156,9 @@ namespace CrunchUtilities
             return false;
         }
 
-        public static void BanPlayer(ulong steamId, DateTime time)
-        {
-            BanManager.BanPlayer(steamId, true);
-            BanList.TempBans.Add(new TempBanItem() { SteamId = steamId, UnbannedAfter = time });
-
-            Log.Info($"Banning {steamId} untils {time}");
-        }
+  
         public static FileUtils utils = new FileUtils();
-        public static void LoadTempBans()
-        {
-            if (File.Exists($"{path}//TempBans.xml"))
-            {
-                BanList = utils.ReadFromXmlFile<TempBanList>($"{path}//TempBans.xml");
-            }
-        }
+
         private static readonly Guid NexusGUID = new Guid("28a12184-0422-43ba-a6e6-2e228611cca5");
         public static bool NexusInstalled { get; private set; } = false;
         public static NexusAPI API;
@@ -215,10 +203,6 @@ namespace CrunchUtilities
             //}
         }
 
-        public static void SaveTempBans()
-        {
-            utils.WriteToXmlFile<TempBanList>($"{path}//TempBans.xml", BanList);
-        }
 
         public static List<long> ids = new List<long>();
         //    public static Logger EconLog = LogManager.GetLogger("Econ");
@@ -242,8 +226,7 @@ namespace CrunchUtilities
         private static DateTime UpdateTime = DateTime.Now;
         private static DateTime PlayerAlertNext = DateTime.Now;
         public static Boolean AlliancesInstalled = false;
-        public static TempBanList BanList = new TempBanList() { TempBans = new List<TempBanItem>() };
-
+ 
         public static IMultiplayerManagerServer BanManager;
         private bool InitPlugins = false;
         public override void Update()
