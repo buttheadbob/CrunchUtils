@@ -1359,7 +1359,7 @@ namespace CrunchUtilities
             //loop through every factions trade stations to check for duplicates
             foreach (KeyValuePair<long, MyFaction> keyValuePair in MySession.Static.Factions)
             {
-                foreach (MyStation myStation in keyValuePair.Value.Stations)
+                foreach (MyFactionStation myStation in keyValuePair.Value.Stations)
                 {
 
                     //check the entities near these locations for duplicates
@@ -2781,7 +2781,8 @@ namespace CrunchUtilities
 
             MyStationsListDefinition stationDefinition = MyDefinitionManager.Static.GetDefinition<MyStationsListDefinition>(subtypeId);
             Vector3 position = Context.Player.Character.PositionComp.GetPosition();
-            MyStation station = new MyStation(MyEntityIdentifier.AllocateId(MyEntityIdentifier.ID_OBJECT_TYPE.STATION, MyEntityIdentifier.ID_ALLOCATION_METHOD.RANDOM), position, stationType, npcfac, GetRandomStationName(stationDefinition), stationDefinition.GeneratedItemsContainerType);
+            var stationName = GetRandomStationName(stationDefinition);
+            MyFactionStation station = new MyFactionStation(MyEntityIdentifier.AllocateId(MyEntityIdentifier.ID_OBJECT_TYPE.STATION, MyEntityIdentifier.ID_ALLOCATION_METHOD.RANDOM), stationName ,position, stationType, npcfac, stationName, stationDefinition.GeneratedItemsContainerType);
 
             npcfac.AddStation(station);
         }
